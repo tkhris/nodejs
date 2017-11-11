@@ -22,7 +22,7 @@ app.get('/prove09', function(request, response) {
 app.get('/mail', 
 	form(
 	    field("weight").trim().required(),
-	    field("type").trim().required(),
+	    field("type").trim().required()
 	),
 function(request, response) {
   console.log("weight:", request.form.weight);
