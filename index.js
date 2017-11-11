@@ -1,7 +1,5 @@
 var express = require('express');
 var app = express();
-var form = require('express-form');
-var field = form.field;
 
 app.set('port', (process.env.PORT || 5000));
 
@@ -12,23 +10,20 @@ app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 
 app.get('/', function(request, response) {
-  response.render('pages/index');
+  	response.render('pages/index');
 });
 
 app.get('/prove09', function(request, response) {
-  response.render('pages/prove09');
+  	response.render('pages/prove09');
 });
 
-app.get('/mail', 
-	form(
-	    field("weight").trim().required(),
-	    field("type").trim().required()
-	),
-function(request, response) {
-  console.log("weight:", request.form.weight);
-  console.log("type:", request.form.type);
+app.get('/mail/:weight:type', function(request, response) {
+	var weight1 = { weight : weight, Content : "content " +weight };
+	var type1 = { type : type, Content : "content " +type };
+  	console.log("weight:", weight1);
+  	console.log("type:", type1);
 });
 
 app.listen(app.get('port'), function() {
-  console.log('Node app is running on port', app.get('port'));
+  	console.log('Node app is running on port', app.get('port'));
 });
