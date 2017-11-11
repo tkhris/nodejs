@@ -1,6 +1,6 @@
 var express = require('express');
 var app = express();
-var form = require('express-form'),
+var form = require('express-form');
 var field = form.field;
 
 app.set('port', (process.env.PORT || 5000));
