@@ -25,8 +25,8 @@ app.get('/mail',
 	    field("type").trim().required(),
 	),
 function(request, response) {
-  console.log("weight:", req.form.weight);
-  console.log("type:", req.form.type);
+  console.log("weight:", request.form.weight);
+  console.log("type:", request.form.type);
 });
 
 app.listen(app.get('port'), function() {
