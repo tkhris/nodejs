@@ -17,11 +17,108 @@ app.get('/prove09', function(request, response) {
   	response.render('pages/prove09');
 });
 
-app.get('/mail/:weight:type', function(request, response) {
-	var weight1 = { weight : weight, Content : "content " +weight };
-	var type1 = { type : type, Content : "content " +type };
-  	console.log("weight:", weight1);
-  	console.log("type:", type1);
+app.get('/mail', function(request, response) {
+	var weight = request.query.weight;
+	var type = request.query.type;
+
+	var cost = 0;
+
+	if (type == "Letters (Stamped)") {
+		if (weight > 3.5) {
+			response.render('pages/prove09');
+		}
+
+		if (weight <= 1)
+			cost = 0.49;
+		else if (weight <= 2)
+			cost = 0.70;
+		else if (weight <= 3)
+			cost = 0.91;
+		else
+			cost = 1.12; 
+	}
+	else if (type == "Letters (Metered)") {
+		if (weight > 3.5) {
+			response.render('pages/prove09');
+		}
+
+		if (weight <= 1)
+			cost = 0.46;
+		else if (weight <= 2)
+			cost = 0.67;
+		else if (weight <= 3)
+			cost = 0.88;
+		else
+			cost = 1.09;
+	}
+	else if (type == "Large Envelopes (Flats)"){
+		if (weight > 13) {
+			response.render('pages/prove09');
+		}
+
+		if (weight <= 1)
+			cost = 0.98;
+		else if (weight <= 2)
+			cost = 1.19;
+		else if (weight <= 3)
+			cost = 1.40;
+		else if (weight <= 4)
+			cost = 1.61;
+		else if (weight <= 5)
+			cost = 1.82;
+		else if (weight <= 6)
+			cost = 2.03;
+		else if (weight <= 7)
+			cost = 2.24;
+		else if (weight <= 8)
+			cost = 2.45;
+		else if (weight <= 9)
+			cost = 2.66;
+		else if (weight <= 10)
+			cost = 2.87;
+		else if (weight <= 11)
+			cost = 3.08;
+		else if (weight <= 12)
+			cost = 3.29;
+		else
+			cost = 3.50;
+	} 
+	else if (type == "Parcels"){
+		if (weight > 13) {
+			response.render('pages/prove09');
+		}
+
+	
+		if (weight <= 4)
+			cost = 3;
+		else if (weight <= 5)
+			cost = 3.16;
+		else if (weight <= 6)
+			cost = 3.32;
+		else if (weight <= 7)
+			cost = 3.48;
+		else if (weight <= 8)
+			cost = 3.64;
+		else if (weight <= 9)
+			cost = 3.80;
+		else if (weight <= 10)
+			cost = 3.96;
+		else if (weight <= 11)
+			cost = 4.19;
+		else if (weight <= 12)
+			cost = 4.36;
+		else
+			cost = 4.53;
+	}
+	else {
+		response.render('pages/prove09');
+	}
+
+	response.render('pages/mail', {
+		weight : weight,
+		type   : type,
+		cost   : cost
+	});
 });
 
 app.listen(app.get('port'), function() {
