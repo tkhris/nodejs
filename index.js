@@ -1,5 +1,7 @@
 var express = require('express');
 var app = express();
+var form = require('express-form'),
+var field = form.field;
 
 app.set('port', (process.env.PORT || 5000));
 
@@ -17,8 +19,14 @@ app.get('/prove09', function(request, response) {
   response.render('pages/prove09');
 });
 
-app.get('/mail', function(request, response) {
-  response.render('pages/mail');
+app.get('/mail', 
+	form(
+	    field("weight").trim().required(),
+	    field("type").trim().required(),
+	),
+function(request, response) {
+  console.log("weight:", req.form.weight);
+  console.log("type:", req.form.type);
 });
 
 app.listen(app.get('port'), function() {
