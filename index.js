@@ -17,6 +17,9 @@ app.get('/prove09', function(request, response) {
   response.render('pages/prove09');
 });
 
+app.get('/mail', function(request, response) {
+  response.render('pages/mail');
+});
 
 app.listen(app.get('port'), function() {
   console.log('Node app is running on port', app.get('port'));
