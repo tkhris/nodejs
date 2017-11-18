@@ -14,12 +14,13 @@ server.listen(process.env.PORT || 3000, function(){
 
 // Firebase
 var firebase = require("firebase");
+// removed the data here to keep is safe
 var config = {
-    apiKey: "AIzaSyD_4SRzKsSMzyGJmQlGgyonz3ZOVtd8Ezg",
-    authDomain: "node-js-9339b.firebaseapp.com",
-    databaseURL: "https://node-js-9339b.firebaseio.com",
-    projectId: "node-js-9339b",
-    storageBucket: "node-js-9339b.appspot.com"
+    apiKey: "",
+    authDomain: "",
+    databaseURL: "",
+    projectId: "",
+    storageBucket: ""
 };
 firebase.initializeApp(config);
 
