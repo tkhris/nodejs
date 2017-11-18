@@ -1,8 +1,11 @@
-var express = require('express');
-const app = express()
-  .use((req, res) => res.sendFile(INDEX) )
-  .listen(PORT, () => console.log(`Listening on ${ PORT }`));
-const io = socketIO(app);
+var express = require('express')
+  , http = require('http');
+
+var app = express();
+var server = http.createServer(app);
+var io = require('socket.io').listen(server);
+
+server.listen(process.env.PORT || 3000);
 
 var firebase = require("firebase");
 var config = {
@@ -14,9 +17,6 @@ var config = {
 };
 
 firebase.initializeApp(config);
-
-
-app.set('port', (process.env.PORT || 5000));
 
 app.use(express.static(__dirname + '/public'));
 
