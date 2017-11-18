@@ -31,6 +31,8 @@ io.on('connection', function(socket) {
 
 	socket.on('start firebase', function(){
 		// when something new is added to firebase
+		// when we start a new connection we want the server to only have 1 listener for firebase
+		firebase.database().ref('rooms/' + '123' + '/text').off();
 		firebase.database().ref('rooms/' + '123' + '/text').on('child_added', function(snapshot) {
 			io.emit('chat message', snapshot.val().msg);
 		});
