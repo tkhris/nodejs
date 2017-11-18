@@ -55,7 +55,7 @@ app.get('/', function(request, response) {
 });
 
 app.get('/project02', function(req, res) {
-	res.render('pages/project02',);
+	res.render('pages/project02');
 });
 
 app.get('/prove09', function(request, response) {
