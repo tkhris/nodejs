@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <% include ../partials/header.ejs %>
+	<script src="/socket.io/socket.io.js"></script>
+	<script>
+	$(function () {
+		var socket = io();
+		socket.emit('start firebase');
+		$('form').submit(function(){
+			socket.emit('chat message', $('#m').val());
+			$('#m').val('');
+			return false;
+	    });
+	    socket.on('chat message', function(msg){
+	    	$('#messages').append($('<li>').text(msg));
+	    });
+	});
+	</script>
+
+</head>
+
+<body>
+
+<% include ../partials/nav.ejs %>
+
+<div class="container">
+<h2>Chat Room</h2>
+
+<ul id="messages"></ul>
+    <form action="">
+      <input id="m" autocomplete="off" /><button>Send</button>
+    </form>
+
+</div>
+
+</body>
+</html>

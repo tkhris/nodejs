@@ -1,5 +1,20 @@
 var express = require('express');
 var app = express();
+var http = require('http').Server(app);
+var io = require('socket.io')(http);
+
+var firebase = require("firebase");
+// remove the data for this
+var config = {
+    apiKey: "",
+    authDomain: "",
+    databaseURL: "",
+    projectId: "",
+    storageBucket: ""
+};
+
+firebase.initializeApp(config);
+
 
 app.set('port', (process.env.PORT || 5000));
 
@@ -9,12 +24,47 @@ app.use(express.static(__dirname + '/public'));
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 
+io.on('connection', function(socket) {
+	console.log('a user connected');
+
+	socket.on('start firebase', function(){
+		// when something new is added to firebase
+		firebase.database().ref('rooms/' + '123' + '/text').on('child_added', function(snapshot) {
+			io.emit('chat message', snapshot.val().msg);
+		});
+	});
+
+	socket.on('disconnect', function(){
+    	console.log('user disconnected');
+    	// TODO: add user disconnected message
+    	firebase.database().ref('rooms/' + '123' + '/text').off();
+  	});
+
+  	socket.on('chat message', function(msg){
+  		// Set the data for the room we are in
+  		// TODO: just using one room right now need to add more
+  		// TODO: add users
+		firebase.database().ref('rooms/' + '123' + '/text').push({
+			msg: msg,
+			user: 'tyler'
+		});
+	});
+});
+
 app.get('/', function(request, response) {
   	response.render('pages/index');
 });
 
+app.get('/project02', function(req, res) {
+	res.render('pages/project02',);
+});
+
 app.get('/prove09', function(request, response) {
   	response.render('pages/prove09');
+});
+
+app.get('/room', function(req, res) {
+	
 });
 
 app.get('/mail', function(request, response) {
@@ -121,6 +171,6 @@ app.get('/mail', function(request, response) {
 	});
 });
 
-app.listen(app.get('port'), function() {
+http.listen(app.get('port'), function() {
   	console.log('Node app is running on port', app.get('port'));
 });
