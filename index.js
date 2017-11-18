@@ -4,13 +4,12 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
 var firebase = require("firebase");
-// remove the data for this
 var config = {
-    apiKey: "",
-    authDomain: "",
-    databaseURL: "",
-    projectId: "",
-    storageBucket: ""
+    apiKey: "AIzaSyD_4SRzKsSMzyGJmQlGgyonz3ZOVtd8Ezg",
+    authDomain: "node-js-9339b.firebaseapp.com",
+    databaseURL: "https://node-js-9339b.firebaseio.com",
+    projectId: "node-js-9339b",
+    storageBucket: "node-js-9339b.appspot.com"
 };
 
 firebase.initializeApp(config);
