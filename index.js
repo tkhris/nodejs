@@ -1,7 +1,8 @@
 var express = require('express');
-var app = express();
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
+const app = express()
+  .use((req, res) => res.sendFile(INDEX) )
+  .listen(PORT, () => console.log(`Listening on ${ PORT }`));
+const io = socketIO(app);
 
 var firebase = require("firebase");
 var config = {
@@ -168,8 +169,4 @@ app.get('/mail', function(request, response) {
 		type   : type,
 		cost   : cost
 	});
-});
-
-http.listen(app.get('port'), function() {
-  	console.log('Node app is running on port', app.get('port'));
 });
