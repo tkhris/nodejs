@@ -17,8 +17,8 @@ var config = {
     projectId: "node-js-9339b",
     storageBucket: "node-js-9339b.appspot.com"
 };
-
 firebase.initializeApp(config);
+
 
 app.use(express.static(__dirname + '/public'));
 
@@ -26,29 +26,34 @@ app.use(express.static(__dirname + '/public'));
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 
+var listeners = [];
+
 io.on('connection', function(socket) {
 	console.log('a user connected');
 
-	socket.on('start firebase', function(){
+	socket.on('start firebase', function(roomId){
 		// when something new is added to firebase
 		// when we start a new connection we want the server to only have 1 listener for firebase
-		firebase.database().ref('rooms/' + '123' + '/text').off();
-		firebase.database().ref('rooms/' + '123' + '/text').on('child_added', function(snapshot) {
-			io.emit('chat message', snapshot.val().msg);
-		});
+		if (listeners.indexOf(roomId) == -1) {
+			listeners[listeners.length] = roomId;
+			firebase.database().ref('rooms/' + roomId + '/text').on('child_added', function(snapshot) {
+				io.emit(roomId + ' chat message', snapshot.val().msg);
+			});
+		} else {
+			io.emit(roomId + ' check');
+		}
 	});
 
 	socket.on('disconnect', function(){
     	console.log('user disconnected');
     	// TODO: add user disconnected message
-    	firebase.database().ref('rooms/' + '123' + '/text').off();
   	});
 
-  	socket.on('chat message', function(msg){
+  	socket.on('chat message', function(roomId, msg){
   		// Set the data for the room we are in
   		// TODO: just using one room right now need to add more
   		// TODO: add users
-		firebase.database().ref('rooms/' + '123' + '/text').push({
+		firebase.database().ref('rooms/' + roomId + '/text').push({
 			msg: msg,
 			user: 'tyler'
 		});
@@ -69,6 +74,26 @@ app.get('/prove09', function(request, response) {
 
 app.get('/room', function(req, res) {
 	
+});
+
+app.post('/messages/:roomId', function(req, res) {
+	var roomId = req.params.roomId;
+
+	firebase.database().ref('rooms/' + roomId + '/text').once('value').then(function(snapshot) {
+
+		var messages = '{';
+		var numMsgs = 0;
+		
+		snapshot.forEach(function(childSnapshot) {
+			messages += '"' + numMsgs + '": "' + childSnapshot.val().msg + '", ';
+			numMsgs++;
+		});
+		messages = messages.substring(0, messages.length - 2);
+	 	
+	 	messages += '}';
+
+	 	res.send(messages);
+	});
 });
 
 app.get('/mail', function(request, response) {

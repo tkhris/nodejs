@@ -6,14 +6,35 @@
 	<script>
 	$(function () {
 		var socket = io();
-		socket.emit('start firebase');
+		var roomId = '123';
+		var numMsgs = 0;
+		socket.emit('start firebase', roomId);
 		$('form').submit(function(){
-			socket.emit('chat message', $('#m').val());
+			socket.emit('chat message', roomId, $('#m').val());
 			$('#m').val('');
 			return false;
 	    });
-	    socket.on('chat message', function(msg){
+	    socket.on(roomId + ' chat message', function(msg){
 	    	$('#messages').append($('<li>').text(msg));
+	    	numMsgs++;
+	    });
+	    socket.on(roomId + ' check', function(msg){
+	    	if (numMsgs == 0) {
+	    		$.ajax({
+	    			type: 'POST',
+	    			url: '/messages/' + roomId,
+	    			dataType: 'json',
+	    			success: function(result) {
+	    				Object.keys(result).forEach(function(key){
+	    					$('#messages').append($('<li>').text(result[key]));
+	    					numMsgs++;
+	    				});
+	    			},
+	    			error: function() {
+	    				console.log('No data found');
+	    			}
+	    		});
+	    	}
 	    });
 	});
 	</script>
