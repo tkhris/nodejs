@@ -24,6 +24,7 @@ var config = {
 };
 firebase.initializeApp(config);
 
+
 app.use(express.static(__dirname + '/public'));
 
 // for saving user information between pages
@@ -364,6 +365,26 @@ app.post('/messages/:roomId', function(req, res) {
 
 app.get('/prove09', function(request, response) {
 	response.render('pages/prove09');
+});
+
+app.post('/messages/:roomId', function(req, res) {
+	var roomId = req.params.roomId;
+
+	firebase.database().ref('rooms/' + roomId + '/text').once('value').then(function(snapshot) {
+
+		var messages = '{';
+		var numMsgs = 0;
+		
+		snapshot.forEach(function(childSnapshot) {
+			messages += '"' + numMsgs + '": "' + childSnapshot.val().msg + '", ';
+			numMsgs++;
+		});
+		messages = messages.substring(0, messages.length - 2);
+	 	
+	 	messages += '}';
+
+	 	res.send(messages);
+	});
 });
 
 app.get('/mail', function(request, response) {
