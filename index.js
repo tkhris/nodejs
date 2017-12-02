@@ -24,7 +24,6 @@ var config = {
 };
 firebase.initializeApp(config);
 
-
 app.use(express.static(__dirname + '/public'));
 
 // for saving user information between pages
