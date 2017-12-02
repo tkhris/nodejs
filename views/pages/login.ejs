@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <% include ../partials/header.ejs %>
+</head>
+
+<body>
+
+<% include ../partials/nav.ejs %>
+
+<div class="container">
+<h2>Login</h2>
+	<form method="POST" action="/cmd_login">
+		<ul>
+			<li><input type="text" name="username"></li>
+			<li><input type="text" name="password"></li>
+			<li><input type="submit" name="Submit"></li>
+		</ul>
+	</form>
+</div>
+
+</body>
+</html>

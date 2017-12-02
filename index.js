@@ -1,9 +1,12 @@
-var express = require('express')
-  , http = require('http');
+// session help from https://codeforgeek.com/2014/09/manage-session-using-node-js-express-4/
 
-var app = express();
-var server = http.createServer(app);
-var io = require('socket.io').listen(server);
+var express    = require('express')
+  , http       = require('http');
+var session    = require('express-session');
+var bodyParser = require('body-parser');
+var app        = express();
+var server     = http.createServer(app);
+var io         = require('socket.io').listen(server);
 
 server.listen(process.env.PORT || 3000, function(){
   console.log("Express server listening on port %d in %s mode", this.address().port, app.settings.env);
@@ -19,8 +22,23 @@ var config = {
 };
 firebase.initializeApp(config);
 
-
 app.use(express.static(__dirname + '/public'));
+
+// for saving user information between pages
+app.use(session({ 
+	secret: 'rand129sk0-12ks24', 
+	cookie: { 
+		maxAge: 60000 
+	},
+	resave: true,
+    saveUninitialized: true
+}));
+
+// for getting POST data
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
+
 
 // views is directory for all template files
 app.set('views', __dirname + '/views');
@@ -31,7 +49,7 @@ var listeners = [];
 io.on('connection', function(socket) {
 	console.log('a user connected');
 
-	socket.on('start firebase', function(roomId){
+	socket.on('start firebase', function(roomId) {
 		// when something new is added to firebase
 		// when we start a new connection we want the server to only have 1 listener for firebase
 		if (listeners.indexOf(roomId) == -1) {
@@ -51,8 +69,6 @@ io.on('connection', function(socket) {
 
   	socket.on('chat message', function(roomId, msg){
   		// Set the data for the room we are in
-  		// TODO: just using one room right now need to add more
-  		// TODO: add users
 		firebase.database().ref('rooms/' + roomId + '/text').push({
 			msg: msg,
 			user: 'tyler'
@@ -64,18 +80,115 @@ app.get('/', function(request, response) {
   	response.render('pages/index');
 });
 
-app.get('/project02', function(req, res) {
-	res.render('pages/project02');
+app.get('/room/:roomId', function(req, res) {
+	var sessData = req.session;
+
+	if (sessData.username) {
+		res.render('pages/project02');
+	} else {
+		res.redirect('/login');
+	}
 });
 
 app.get('/prove09', function(request, response) {
   	response.render('pages/prove09');
 });
 
-app.get('/room', function(req, res) {
-	
+// Users Login page
+app.get('/login', function(req, res) {
+	sessData = req.session;
+
+	if (sessData.username) {
+		res.redirect('/user_rooms');
+	} else {
+		res.render('pages/login');
+	}
 });
 
+// POST that logs users in
+// redirects to /user_rooms on success, and /login on fail
+// TODO: add errors
+app.post('/cmd_login', function(req, res) {
+	sessData = req.session;
+
+	firebase.database().ref('users').once('value').then(function(snapshot) {
+
+		var found = false;
+
+		snapshot.forEach(function(childSnapshot) {
+			if (childSnapshot.val().username == req.body.username 
+				&& childSnapshot.val().password == req.body.password) {
+				found = true;
+
+				sessData.username = req.body.username;
+
+				var rooms = [];
+
+				childSnapshot.val().rooms.forEach(function (room) {
+					rooms.push(room.name);
+				});
+
+				sessData.rooms = rooms;
+			}
+		});
+
+		if (found) {
+			res.redirect('/user_rooms');
+		} else {
+			res.redirect('/login');
+		}
+	});
+
+});
+
+// logs a user out
+// redirects to /login
+app.get('/cmd_logout', function(req, res) {
+	req.session.destroy(function(err) {
+		if(err) {
+			console.log(err);
+		} else {
+		  	res.redirect('/login');
+		}
+	});
+});
+
+// page for creating a new user
+app.get('/create_user', function(req, res) {
+	sessData = req.session;
+
+	if (sessData.username) {
+		res.redirect('/user_rooms');
+	} else {
+		res.render('pages/create_user');
+	}
+});
+
+// POST for creating a new user
+// redirects to /user_rooms on success, and /login on fail
+// TODO: add errors
+app.post('/cmd_create', function(req, res) {
+	sessData = req.session;
+	sess.username = req.body.username;
+
+});
+
+// displays all rooms that a user has joined
+app.get('/user_rooms', function(req, res) {
+	sessData = req.session;
+
+	if (sessData.username) {
+		res.render('pages/user_rooms', { 
+			username: sessData.username, 
+			rooms: sessData.rooms 
+		});
+	} else {
+		res.redirect('/login');
+	}
+});
+
+
+// POST used as an AJAX call from /room/:roomId to get all chat messages for that room
 app.post('/messages/:roomId', function(req, res) {
 	var roomId = req.params.roomId;
 

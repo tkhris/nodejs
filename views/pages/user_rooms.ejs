@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <% include ../partials/header.ejs %>
+</head>
+
+<body>
+
+<% include ../partials/nav.ejs %>
+
+<div class="container">
+<h2>Current Rooms</h2>
+
+<h3>Welcome <%- username -%></h3>
+<p>Rooms</p>
+<ul>
+	<% rooms.forEach(function(room) { %>
+        <li><a href="/room/<%= room %>"><%= room %></a></li>
+    <% }); %>
+</ul>
+<button>Create New</button>
+<button>Join</button>
+</div>
+
+</body>
+</html>
