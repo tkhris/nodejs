@@ -6,7 +6,7 @@
 	<script>
 	$(function () {
 		var socket = io();
-		var roomId = '123';
+		var roomId = <%= roomId %>;
 		var numMsgs = 0;
 		socket.emit('start firebase', roomId);
 		$('form').submit(function(){

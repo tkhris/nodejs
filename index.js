@@ -12,6 +12,7 @@ server.listen(process.env.PORT || 3000, function(){
   console.log("Express server listening on port %d in %s mode", this.address().port, app.settings.env);
 });
 
+// Firebase
 var firebase = require("firebase");
 var config = {
     apiKey: "AIzaSyD_4SRzKsSMzyGJmQlGgyonz3ZOVtd8Ezg",
@@ -44,6 +45,7 @@ app.use(bodyParser.urlencoded({
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 
+// Socket.IO
 var listeners = [];
 
 io.on('connection', function(socket) {
@@ -76,6 +78,10 @@ io.on('connection', function(socket) {
 	});
 });
 
+/************************************************************
+ * Views
+ *
+ ************************************************************/
 app.get('/', function(request, response) {
   	response.render('pages/index');
 });
@@ -84,14 +90,13 @@ app.get('/room/:roomId', function(req, res) {
 	var sessData = req.session;
 
 	if (sessData.username) {
-		res.render('pages/project02');
+		res.render('pages/room', {
+			roomId: req.params.roomId,
+			username: sessData.username
+		});
 	} else {
 		res.redirect('/login');
 	}
-});
-
-app.get('/prove09', function(request, response) {
-  	response.render('pages/prove09');
 });
 
 // Users Login page
@@ -104,6 +109,36 @@ app.get('/login', function(req, res) {
 		res.render('pages/login');
 	}
 });
+
+// page for creating a new user
+app.get('/create_user', function(req, res) {
+	sessData = req.session;
+
+	if (sessData.username) {
+		res.redirect('/user_rooms');
+	} else {
+		res.render('pages/create_user');
+	}
+});
+
+// displays all rooms that a user has joined
+app.get('/user_rooms', function(req, res) {
+	sessData = req.session;
+
+	if (sessData.username) {
+		res.render('pages/user_rooms', { 
+			username: sessData.username, 
+			rooms: sessData.rooms 
+		});
+	} else {
+		res.redirect('/login');
+	}
+});
+
+/************************************************************
+ * Commands
+ *
+ ************************************************************/
 
 // POST that logs users in
 // redirects to /user_rooms on success, and /login on fail
@@ -153,17 +188,6 @@ app.get('/cmd_logout', function(req, res) {
 	});
 });
 
-// page for creating a new user
-app.get('/create_user', function(req, res) {
-	sessData = req.session;
-
-	if (sessData.username) {
-		res.redirect('/user_rooms');
-	} else {
-		res.render('pages/create_user');
-	}
-});
-
 // POST for creating a new user
 // redirects to /user_rooms on success, and /login on fail
 // TODO: add errors
@@ -173,20 +197,10 @@ app.post('/cmd_create', function(req, res) {
 
 });
 
-// displays all rooms that a user has joined
-app.get('/user_rooms', function(req, res) {
-	sessData = req.session;
-
-	if (sessData.username) {
-		res.render('pages/user_rooms', { 
-			username: sessData.username, 
-			rooms: sessData.rooms 
-		});
-	} else {
-		res.redirect('/login');
-	}
-});
-
+/************************************************************
+ * AJAX calls
+ *
+ ************************************************************/
 
 // POST used as an AJAX call from /room/:roomId to get all chat messages for that room
 app.post('/messages/:roomId', function(req, res) {
@@ -207,6 +221,15 @@ app.post('/messages/:roomId', function(req, res) {
 
 	 	res.send(messages);
 	});
+});
+
+/************************************************************
+ * Other Assignments
+ *
+ ************************************************************/
+
+app.get('/prove09', function(request, response) {
+	response.render('pages/prove09');
 });
 
 app.get('/mail', function(request, response) {
