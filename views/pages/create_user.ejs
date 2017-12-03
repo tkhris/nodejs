@@ -10,7 +10,14 @@
 
 <div class="container">
 <h2>New User</h2>
-
+	<form method="POST" action="/cmd_create_user">
+		<ul>
+			<li><input type="text" name="username"></li>
+			<li><input type="text" name="password"></li>
+			<li><input type="submit" name="Submit"></li>
+			<li>Or <a href="/login"> Login</a></li>
+		</ul>
+	</form>
 </div>
 
 </body>

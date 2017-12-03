@@ -6,34 +6,25 @@
 	<script>
 	$(function () {
 		var socket = io();
-		var roomId = <%= roomId %>;
+		var roomId = '<%= roomId %>';
 		var numMsgs = 0;
 		socket.emit('start firebase', roomId);
 		$('form').submit(function(){
-			socket.emit('chat message', roomId, $('#m').val());
+			socket.emit('chat message', roomId, $('#m').val(), '<%= username %>');
 			$('#m').val('');
 			return false;
 	    });
-	    socket.on(roomId + ' chat message', function(msg){
-	    	$('#messages').append($('<li>').text(msg));
+	    socket.on(roomId + ' chat message', function(msg, user){
+	    	$('#messages').append($('<li>').text(user + ': ' + msg));
 	    	numMsgs++;
 	    });
-	    socket.on(roomId + ' check', function(msg){
+	    socket.on(roomId + ' check', function(result){
 	    	if (numMsgs == 0) {
-	    		$.ajax({
-	    			type: 'POST',
-	    			url: '/messages/' + roomId,
-	    			dataType: 'json',
-	    			success: function(result) {
-	    				Object.keys(result).forEach(function(key){
-	    					$('#messages').append($('<li>').text(result[key]));
-	    					numMsgs++;
-	    				});
-	    			},
-	    			error: function() {
-	    				console.log('No data found');
-	    			}
-	    		});
+	    		json = JSON.parse(result);
+				Object.keys(json).forEach(function(key){
+					$('#messages').append($('<li>').text(json[key].user + ': ' + json[key].msg));
+					numMsgs++;
+				});
 	    	}
 	    });
 	});
@@ -47,12 +38,12 @@
 
 <div class="container">
 <h2>Chat Room</h2>
+<h3>Room Id: <%= roomId %></h3>
 
 <ul id="messages"></ul>
     <form action="">
-      <input id="m" autocomplete="off" /><button>Send</button>
+    	<input id="m" autocomplete="off" /><button>Send</button>
     </form>
-
 </div>
 
 </body>

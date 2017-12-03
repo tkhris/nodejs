@@ -10,16 +10,22 @@
 
 <div class="container">
 <h2>Current Rooms</h2>
+<a href="/cmd_logout">Logout</a>
 
 <h3>Welcome <%- username -%></h3>
 <p>Rooms</p>
 <ul>
-	<% rooms.forEach(function(room) { %>
+	<% if (rooms) rooms.forEach(function(room) { %>
         <li><a href="/room/<%= room %>"><%= room %></a></li>
     <% }); %>
 </ul>
-<button>Create New</button>
-<button>Join</button>
+<form action="/cmd_create_room" method="post">
+	<input type="submit" value="Create New">
+</form>
+<form action="/cmd_join_room" method="post">
+	<input type="text" name="roomId">
+	<input type="submit" value="Join">
+</form>
 </div>
 
 </body>

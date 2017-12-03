@@ -57,10 +57,25 @@ io.on('connection', function(socket) {
 		if (listeners.indexOf(roomId) == -1) {
 			listeners[listeners.length] = roomId;
 			firebase.database().ref('rooms/' + roomId + '/text').on('child_added', function(snapshot) {
-				io.emit(roomId + ' chat message', snapshot.val().msg);
+				io.emit(roomId + ' chat message', snapshot.val().msg, snapshot.val().user);
 			});
 		} else {
-			io.emit(roomId + ' check');
+			firebase.database().ref('rooms/' + roomId + '/text').once('value').then(function(snapshot) {
+
+				var messages = '{';
+				var numMsgs = 0;
+
+				snapshot.forEach(function(childSnapshot) {
+					messages += '"' + numMsgs + '": { "user": "' + childSnapshot.val().user + '", "msg": "' + childSnapshot.val().msg + '"}, ';
+					numMsgs++;
+				});
+
+				messages = messages.substring(0, messages.length - 2);
+			 	
+			 	messages += '}';
+
+			 	io.emit(roomId + ' check', messages);
+			});
 		}
 	});
 
@@ -69,11 +84,11 @@ io.on('connection', function(socket) {
     	// TODO: add user disconnected message
   	});
 
-  	socket.on('chat message', function(roomId, msg){
+  	socket.on('chat message', function(roomId, msg, user){
   		// Set the data for the room we are in
 		firebase.database().ref('rooms/' + roomId + '/text').push({
 			msg: msg,
-			user: 'tyler'
+			user: user
 		});
 	});
 });
@@ -84,6 +99,10 @@ io.on('connection', function(socket) {
  ************************************************************/
 app.get('/', function(request, response) {
   	response.render('pages/index');
+});
+
+app.get('/project02', function(request, response) {
+  	response.redirect('/login');
 });
 
 app.get('/room/:roomId', function(req, res) {
@@ -146,34 +165,28 @@ app.get('/user_rooms', function(req, res) {
 app.post('/cmd_login', function(req, res) {
 	sessData = req.session;
 
-	firebase.database().ref('users').once('value').then(function(snapshot) {
-
-		var found = false;
-
-		snapshot.forEach(function(childSnapshot) {
-			if (childSnapshot.val().username == req.body.username 
-				&& childSnapshot.val().password == req.body.password) {
-				found = true;
-
-				sessData.username = req.body.username;
-
+	firebase.database().ref('users/' + req.body.username).once('value').then(function(snapshot) {
+		if (snapshot.val() != null) {
+			if (snapshot.val().password == req.body.password) {
 				var rooms = [];
 
-				childSnapshot.val().rooms.forEach(function (room) {
-					rooms.push(room.name);
-				});
+				if (snapshot.val().rooms != null) {
+					snapshot.val().rooms.forEach(function (room) {
+						rooms.push(room);
+					});
+				}
 
 				sessData.rooms = rooms;
-			}
-		});
+				sessData.username = req.body.username;
 
-		if (found) {
-			res.redirect('/user_rooms');
+				res.redirect('/user_rooms');
+			} else {
+				res.redirect('/login');
+			}
 		} else {
 			res.redirect('/login');
 		}
 	});
-
 });
 
 // logs a user out
@@ -191,37 +204,118 @@ app.get('/cmd_logout', function(req, res) {
 // POST for creating a new user
 // redirects to /user_rooms on success, and /login on fail
 // TODO: add errors
-app.post('/cmd_create', function(req, res) {
+app.post('/cmd_create_user', function(req, res) {
 	sessData = req.session;
-	sess.username = req.body.username;
+	
+	if (sessData.username) {
+		res.redirect('/user_rooms');
+	} else {
+		firebase.database().ref('users/' + req.body.username).once('value').then(function(snapshot) {
+
+			if (snapshot.val() == null) {
+				firebase.database().ref('users/' + req.body.username).set({
+					password: req.body.password
+				});
+				sessData.username = req.body.username;
+				res.redirect('/user_rooms');
+			} else {
+				res.redirect('/create_user');
+			}
+		});
+	}
+});
+
+// POST create a new room for the user that is 
+app.post('/cmd_create_room', function(req, res) {
+	sessData = req.session;
+
+	if (sessData.username) {
+		var d = new Date();
+		var newRoom = randString();
+
+		firebase.database().ref('rooms/' + newRoom + '/text').push({
+				msg: sessData.username + ' started room ' + d.getMonth() + '/' + d.getDay() + '/' + d.getYear(),
+				user: sessData.username
+		});
+
+		firebase.database().ref('users/' + sessData.username + '/rooms').orderByKey().limitToLast(1).once('value').then(function(snapshot) {
+			json = {};
+			found = false;
+			snapshot.forEach(function(data) {
+				found = true;
+				json[parseInt(data.key) + 1] = newRoom;
+			});
+
+			if (found == false) {
+				json[1] = newRoom;
+			}
+			
+			firebase.database().ref('users/' + sessData.username + '/rooms').update(json);
+		});
+		
+		
+		res.redirect('/room/' + newRoom);
+	} else {
+		res.redirect('/login');
+	}
+});
+
+// POST create a new room for the user that is 
+app.post('/cmd_user_join', function(req, res) {
+	sessData = req.session;
 
 });
 
 /************************************************************
  * AJAX calls
- *
+ * Ajax stopped working for some reason, i was getting Unresolved Promise errors
+ * i looked up Promises and after spending a couple hours trying to solve it i 
+ * decided to just use Socket.io to send the message as the ajax call is erroneous
  ************************************************************/
 
 // POST used as an AJAX call from /room/:roomId to get all chat messages for that room
 app.post('/messages/:roomId', function(req, res) {
 	var roomId = req.params.roomId;
 
-	firebase.database().ref('rooms/' + roomId + '/text').once('value').then(function(snapshot) {
+	// return new Promise(function (resolve, reject) {
+		firebase.database().ref('rooms/' + roomId + '/text').once('value').then(function(snapshot) {
 
-		var messages = '{';
-		var numMsgs = 0;
-		
-		snapshot.forEach(function(childSnapshot) {
-			messages += '"' + numMsgs + '": "' + childSnapshot.val().msg + '", ';
-			numMsgs++;
-		});
-		messages = messages.substring(0, messages.length - 2);
-	 	
-	 	messages += '}';
+			var messages = '{';
+			var numMsgs = 0;
 
-	 	res.send(messages);
-	});
+			snapshot.forEach(function(childSnapshot) {
+				messages += '"' + numMsgs + '": { user: "' + childSnapshot.val().user + '", msg: "' + childSnapshot.val().msg + '"}, ';
+				numMsgs++;
+			});
+
+			messages = messages.substring(0, messages.length - 2);
+		 	
+		 	messages += '}';
+
+		 	res.send(messages);
+		 	// return resolve;
+		});//, function(error) {
+		  // The callback failed.
+		  //console.error(error);
+		  //return reject;
+		//});
+	// });
 });
+
+/************************************************************
+ * Functions
+ *
+ ************************************************************/
+ // Function from stackoverflow https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
+ var randString = function() {
+  var text = "";
+  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+  for (var i = 0; i < 5; i++)
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+  return text;
+}
 
 /************************************************************
  * Other Assignments
