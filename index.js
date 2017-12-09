@@ -145,9 +145,19 @@ app.get('/user_rooms', function(req, res) {
 	sessData = req.session;
 
 	if (sessData.username) {
-		res.render('pages/user_rooms', { 
-			username: sessData.username, 
-			rooms: sessData.rooms 
+		firebase.database().ref('users/' + sessData.username).once('value').then(function(snapshot) {
+			var rooms = [];
+
+			if (snapshot.val().rooms != null) {
+				snapshot.val().rooms.forEach(function (room) {
+					rooms.push(room);
+				});
+			}
+
+			res.render('pages/user_rooms', { 
+				username: sessData.username, 
+				rooms: rooms 
+			});
 		});
 	} else {
 		res.redirect('/login');
@@ -260,10 +270,39 @@ app.post('/cmd_create_room', function(req, res) {
 	}
 });
 
-// POST create a new room for the user that is 
-app.post('/cmd_user_join', function(req, res) {
+// POST user joins room if it exists
+app.post('/cmd_join_room', function(req, res) {
 	sessData = req.session;
 
+	if (sessData.username) {
+		var d = new Date();
+		var newRoom = req.body.roomId;
+
+		firebase.database().ref('rooms/' + newRoom + '/text').push({
+				msg: sessData.username + ' joined room',
+				user: sessData.username
+		});
+
+		firebase.database().ref('users/' + sessData.username + '/rooms').orderByKey().limitToLast(1).once('value').then(function(snapshot) {
+			json = {};
+			found = false;
+			snapshot.forEach(function(data) {
+				found = true;
+				json[parseInt(data.key) + 1] = newRoom;
+			});
+
+			if (found == false) {
+				json[1] = newRoom;
+			}
+			
+			firebase.database().ref('users/' + sessData.username + '/rooms').update(json);
+		});
+		
+		
+		res.redirect('/room/' + newRoom);
+	} else {
+		res.redirect('/login');
+	}
 });
 
 /************************************************************
